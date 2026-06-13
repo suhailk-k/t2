@@ -1,65 +1,82 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+import { Colors } from './colors';
 
-import '@/global.css';
-
-import { Platform } from 'react-native';
-
-export const Colors = {
-  light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-  },
-  dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-  },
-} as const;
-
-export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export const Typography = {
+  h1: { fontSize: 22, fontWeight: '700' as const, color: Colors.textPrimary, lineHeight: 30 },
+  h2: { fontSize: 18, fontWeight: '700' as const, color: Colors.textPrimary, lineHeight: 26 },
+  h3: { fontSize: 16, fontWeight: '600' as const, color: Colors.textPrimary, lineHeight: 24 },
+  h4: { fontSize: 15, fontWeight: '600' as const, color: Colors.textPrimary, lineHeight: 22 },
+  bodyLarge: { fontSize: 15, fontWeight: '400' as const, color: Colors.textPrimary, lineHeight: 22 },
+  body: { fontSize: 14, fontWeight: '400' as const, color: Colors.textPrimary, lineHeight: 21 },
+  bodyMedium: { fontSize: 14, fontWeight: '500' as const, color: Colors.textPrimary, lineHeight: 21 },
+  bodyBold: { fontSize: 14, fontWeight: '700' as const, color: Colors.textPrimary, lineHeight: 21 },
+  small: { fontSize: 12, fontWeight: '400' as const, color: Colors.textSecondary, lineHeight: 18 },
+  smallMedium: { fontSize: 12, fontWeight: '500' as const, color: Colors.textSecondary, lineHeight: 18 },
+  caption: { fontSize: 11, fontWeight: '400' as const, color: Colors.textTertiary, lineHeight: 16 },
+  badge: { fontSize: 11, fontWeight: '600' as const, lineHeight: 16 },
+  label: { fontSize: 13, fontWeight: '500' as const, color: Colors.textSecondary, lineHeight: 20 },
+};
 
 export const Spacing = {
-  half: 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  base: 16,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
   one: 4,
   two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
-} as const;
+  three: 12,
+  four: 16,
+  five: 20,
+  half: 2,
+};
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+export const BorderRadius = {
+  xs: 4,
+  sm: 6,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  xxl: 20,
+  full: 999,
+};
+
+export const Shadow = {
+  card: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  header: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  strong: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+};
+
+export const BottomTabInset = 0;
+export const MaxContentWidth = 640;
+
+export const Fonts = {
+  mono: 'Courier',
+  sans: 'System',
+};
+
+export type ThemeColor =
+  | 'background'
+  | 'backgroundElement'
+  | 'backgroundSelected'
+  | 'text'
+  | 'textSecondary';

@@ -1,15 +1,56 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { NativeModules } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+let TPStreams: any = null;
+try {
+  if (NativeModules.TPStreams) {
+    const tpLib = require('react-native-tpstreams');
+    TPStreams = tpLib.TPStreams;
+  }
+} catch (e) {
+  console.warn('Failed to load react-native-tpstreams:', e);
+}
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+if (TPStreams) {
+  try {
+    TPStreams.initialize('87r52e');
+  } catch (err) {
+    console.error('Failed to initialize TPStreams:', err);
+  }
+}
+
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <>
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="switch-course"
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="lecture/[id]"
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="announcement/[id]"
+          options={{
+            presentation: 'card',
+            animation: 'slide_from_right',
+            headerShown: false,
+          }}
+        />
+      </Stack>
+    </>
   );
 }

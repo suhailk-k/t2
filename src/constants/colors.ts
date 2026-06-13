@@ -1,0 +1,60 @@
+const palette = {
+  primary: '#2563EB',
+  primaryLight: '#EFF6FF',
+  primaryBorder: '#93C5FD',
+  success: '#16A34A',
+  successLight: '#DCFCE7',
+  successRing: '#22C55E',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  warningText: '#D97706',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
+  textPrimary: '#111827',
+  textSecondary: '#6B7280',
+  textTertiary: '#9CA3AF',
+  textMuted: '#D1D5DB',
+  border: '#E5E7EB',
+  borderLight: '#F3F4F6',
+  white: '#FFFFFF',
+  background: '#F9FAFB',
+  cardBg: '#FFFFFF',
+  inputBg: '#F9FAFB',
+  tabBarBg: '#FFFFFF',
+  tabActive: '#2563EB',
+  tabInactive: '#9CA3AF',
+  progressTrack: '#E5E7EB',
+  progressFill: '#22C55E',
+  switchCourseBg: '#EFF6FF',
+  switchCourseText: '#2563EB',
+  badgeFR: '#0EA5E9',
+  badgeFA: '#6366F1',
+  badgeLW: '#10B981',
+  badgeBT: '#F59E0B',
+  badgeTX: '#EF4444',
+  badgeAA: '#8B5CF6',
+  videoOverlay: 'rgba(0,0,0,0.35)',
+  shadow: 'rgba(0,0,0,0.08)',
+  divider: '#F3F4F6',
+};
+
+export const Colors = palette;
+
+const themeBase = {
+  background: palette.background,
+  backgroundElement: '#F3F4F6',
+  backgroundSelected: '#E5E7EB',
+  text: palette.textPrimary,
+  textSecondary: palette.textSecondary,
+};
+
+export const LegacyColors = {
+  light: themeBase,
+  dark: {
+    background: '#1C1C1E',
+    backgroundElement: '#2C2C2E',
+    backgroundSelected: '#3A3A3C',
+    text: '#FFFFFF',
+    textSecondary: '#AEAEB2',
+  },
+};
