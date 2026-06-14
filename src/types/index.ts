@@ -13,6 +13,9 @@ export interface Lecture {
   title: string;
   duration: string;
   completed: boolean;
+  videoId?: string;
+  thumbnailUrl?: string;
+  isFavourite?: boolean;
 }
 
 export interface Chapter {
@@ -28,6 +31,8 @@ export interface Material {
   title: string;
   type: 'pdf' | 'doc';
   section: 'topic' | 'chapter';
+  url?: string;
+  size?: string;
 }
 
 export interface Note {

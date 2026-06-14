@@ -34,14 +34,17 @@ export const VideoPlayer: React.FC<Props> = ({ uri = '', videoId, accessToken, o
       !!UIManager.getViewManagerConfig('RCTTPStreamsRNPlayerView')
     );
 
-  const isEmbed = 
+  const isDirectVideo = !!uri && (
+    uri.includes('.m3u8') ||
+    uri.includes('.mp4') ||
+    uri.includes('.mov') ||
+    uri.includes('.webm')
+  );
+
+  const isEmbed = !isDirectVideo && (
     uri.includes('tpstreams.com') || 
-    // uri.includes('embed') || 
-    // uri.includes('player.tpstreams.com') || 
-    // uri.includes('vimeo') || 
-    // uri.includes('youtube') || 
-    // uri.includes('youtu.be') ||
-    (!!videoId && !!accessToken);
+    (!!videoId && !!accessToken)
+  );
 
   const player = useVideoPlayer(isEmbed ? null : uri, (p) => {
     p.loop = false;

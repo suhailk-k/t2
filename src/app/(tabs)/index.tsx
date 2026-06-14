@@ -237,59 +237,10 @@ export default function HomeScreen() {
     try {
       const res = await api.getHome();
 
-      
-      const root = (res as any)?.data || res;
-
-      let continueWatching = root?.continueWatching || root?.continue_watching || null;
-      if (continueWatching) {
-        continueWatching = {
-          courseId: continueWatching.paper_id || continueWatching.courseId || continueWatching.course_id || 'fa',
-          title: continueWatching.title || '',
-          subtitle: continueWatching.subject || continueWatching.subtitle || '',
-          code: continueWatching.paper_code || continueWatching.code || 'FA',
-          lastWatched: continueWatching.last_watched_label || continueWatching.lastWatched || continueWatching.last_watched || '',
-          timeLeft: continueWatching.remaining_time_label || continueWatching.timeLeft || continueWatching.time_left || '',
-          progress: continueWatching.progress_percent || continueWatching.progress || 0,
-          videoUrl: continueWatching.videoUrl || continueWatching.video_url || '',
-          thumbnailUrl: continueWatching.thumbnailUrl || continueWatching.thumbnail_url || '',
-          lectureId: continueWatching.topic_id || continueWatching.topicId || '',
-        };
-      }
-
-      let recentLearning = root?.recentLearning || root?.recent_learning || root?.courses || root?.papers || [];
-      if (!Array.isArray(recentLearning)) {
-        recentLearning = [];
-      } else {
-        recentLearning = recentLearning.map((c: any) => ({
-          id: c.id || c._id || '',
-          title: c.title || c.name || '',
-          code: c.code || c.paper_code || 'FA',
-          thumbnail: c.thumbnail || c.image || '',
-          totalChapters: c.totalChapters || c.total_chapters || 12,
-          completedChapters: c.completedChapters || c.completed_chapters || 0,
-          progress: c.progress || 0,
-        }));
-      }
-
-      let announcements = root?.announcements || [];
-      if (!Array.isArray(announcements)) {
-        announcements = [];
-      } else {
-        announcements = announcements.map((a: any) => ({
-          id: a.id || a._id || String(Math.random()),
-          title: a.title || '',
-          category: a.category || 'Academics',
-          excerpt: a.excerpt || a.content?.slice(0, 50) || '',
-          content: a.content || '',
-          imageUrl: a.imageUrl || a.image_url || a.image || 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&q=80',
-          postDate: a.postDate || a.post_date || a.createdAt || '',
-        }));
-      }
-
       setData({
-        continueWatching,
-        recentLearning,
-        announcements,
+        continueWatching: res?.continueWatching || null,
+        recentLearning: Array.isArray(res?.recentLearning) ? res.recentLearning : [],
+        announcements: Array.isArray(res?.announcements) ? res.announcements : [],
       });
     } catch (err) {
       console.error(err);
@@ -357,7 +308,7 @@ export default function HomeScreen() {
             data={data?.continueWatching}
             onResume={() => {
               const courseId = data?.continueWatching?.courseId || 'fa';
-              const lectureId = data?.continueWatching?.lectureId || '';
+              const lectureId = data?.continueWatching?.lectureId || data?.continueWatching?.resumeVideoId || '';
               router.push({
                 pathname: '/lecture/[id]',
                 params: { id: courseId, resumeLectureId: lectureId },

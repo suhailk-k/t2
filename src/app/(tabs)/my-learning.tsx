@@ -23,24 +23,7 @@ export default function MyLearningScreen() {
   const loadCourses = async () => {
     try {
       const res = await api.getMyLearning();
-      let rawCourses: any[] = [];
-      if (Array.isArray(res)) {
-        rawCourses = res;
-      } else if (res && typeof res === 'object') {
-        const possibleArray = (res as any).courses || (res as any).data || (res as any).papers || [];
-        rawCourses = Array.isArray(possibleArray) ? possibleArray : [];
-      }
-      
-      const mapped = rawCourses.map((c: any) => ({
-        id: c.id || c._id || '',
-        title: c.title || c.name || '',
-        code: c.code || c.paper_code || 'FA',
-        thumbnail: c.thumbnail || c.image || '',
-        totalChapters: c.totalChapters || c.total_chapters || 12,
-        completedChapters: c.completedChapters || c.completed_chapters || 0,
-        progress: c.progress || 0,
-      }));
-      setCourses(mapped);
+      setCourses(Array.isArray(res) ? res : []);
     } catch (err) {
       console.error(err);
       setCourses([]);

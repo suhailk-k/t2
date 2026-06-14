@@ -225,6 +225,9 @@ export default function LectureScreen() {
               title: l.title || '',
               duration: typeof l.duration === 'number' ? `${formatDuration(l.duration)} min` : String(l.duration || ''),
               completed: !!(l.completed || l.isCompleted),
+              videoId: l.video_id || l.videoId || '',
+              thumbnailUrl: l.thumbnail_url || l.thumbnailUrl || '',
+              isFavourite: !!(l.is_favourite || l.isFavourite),
             })),
           };
         });
@@ -234,8 +237,9 @@ export default function LectureScreen() {
     
       let initialLecture = null;
       if (resumeLectureId && mappedChapters.length > 0) {
+        const resumeId = String(resumeLectureId);
         for (const ch of mappedChapters) {
-          const found = ch.lectures?.find((l: any) => l.id === resumeLectureId);
+          const found = ch.lectures?.find((l: any) => l.id === resumeId || l.videoId === resumeId);
           if (found) {
             initialLecture = found;
             break;
@@ -244,7 +248,7 @@ export default function LectureScreen() {
       }
       
       if (!initialLecture) {
-        initialLecture = Array.isArray(parsedChapters) ? parsedChapters[0]?.lectures?.[0] : null;
+        initialLecture = mappedChapters[0]?.lectures?.[0] || null;
       }
 
       if (initialLecture) {
@@ -273,7 +277,7 @@ export default function LectureScreen() {
       const chapter = Array.isArray(rootMat?.chapter) ? rootMat.chapter : [];
       setMaterials({ topic, chapter });
 
-      loadNotes(lecture.id);
+      loadNotes(lecture.videoId || lecture.id);
     } catch (err) {
       console.error('Error fetching lecture metadata:', err);
     } finally {
@@ -328,7 +332,7 @@ export default function LectureScreen() {
       await api.deleteNote(noteId);
       Alert.alert('Success', 'Note deleted successfully.');
       if (selectedLecture) {
-        loadNotes(selectedLecture.id);
+        loadNotes(selectedLecture.videoId || selectedLecture.id);
       }
     } catch (err) {
       console.error(err);
@@ -344,19 +348,19 @@ export default function LectureScreen() {
       if (editingNote) {
         await api.updateNote({
           _id: editingNote.id,
-          video_id: selectedLecture.id,
+          video_id: selectedLecture.videoId || selectedLecture.id,
           time: noteTimeStr,
           content: noteContent,
         });
       } else {
         await api.createNote({
-          video_id: selectedLecture.id,
+          video_id: selectedLecture.videoId || selectedLecture.id,
           time: noteTimeStr,
           content: noteContent,
         });
       }
       setNoteModalVisible(false);
-      loadNotes(selectedLecture.id);
+      loadNotes(selectedLecture.videoId || selectedLecture.id);
     } catch (err) {
       console.error('Save note error:', err);
       // Local fallback

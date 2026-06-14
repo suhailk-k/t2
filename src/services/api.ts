@@ -1,7 +1,100 @@
-import { Announcement, Chapter, Course, Material } from '../types';
+import { Announcement, Course, Material } from '../types';
 import { getToken } from '../utils/auth';
 
 const BASE_URL = 'https://lmsb.elancelearning.com';
+const TPSTREAMS_ORG_ID = '87r52e';
+
+function unwrapData(res: any) {
+  return res?.data?.data ?? res?.data ?? res;
+}
+
+function normalizeProgress(value: any) {
+  const numeric = Number(value) || 0;
+  if (numeric > 0 && numeric <= 1) {
+    return Math.round(numeric * 100);
+  }
+  return Math.round(numeric);
+}
+
+function normalizeProgressRatio(value: any) {
+  const numeric = Number(value) || 0;
+  if (numeric > 1) {
+    return Math.max(0, Math.min(1, numeric / 100));
+  }
+  return Math.max(0, Math.min(1, numeric));
+}
+
+function secondsToLabel(value: any) {
+  const totalSeconds = Number(value);
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return typeof value === 'string' ? value : '';
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.ceil((totalSeconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours} hr ${minutes} min left`;
+  }
+  return `${minutes} min left`;
+}
+
+function mapCourse(c: any): Course {
+  return {
+    id: c.subject_id || c.paper_id || c.id || c._id || '',
+    title: c.title || c.name || c.subject || '',
+    code: c.paper_code || c.code || '',
+    thumbnail: c.image_url || c.icon_url || c.thumbnail_url || c.thumbnail || c.image || '',
+    totalChapters: c.total_chapters ?? c.totalChapters ?? 0,
+    completedChapters: c.completed_chapters ?? c.completedChapters ?? 0,
+    progress: normalizeProgress(c.progress_percentage ?? c.progress_percent ?? c.progress ?? 0),
+  };
+}
+
+function mapAnnouncement(a: any): Announcement {
+  const description = a.description || a.content || '';
+  return {
+    id: a.announcement_id || a.id || a._id || '',
+    title: a.title || '',
+    category: a.category || 'General',
+    excerpt: a.excerpt || description.slice(0, 80),
+    content: description,
+    imageUrl: a.image_url || a.imageUrl || a.image || '',
+    postDate: a.published_at || a.postDate || a.post_date || a.createdAt || '',
+  };
+}
+
+function mapMaterial(m: any): Material {
+  return {
+    id: m.material_id || m.id || m._id || '',
+    title: m.title || '',
+    type: (m.file_type || m.type) === 'doc' ? 'doc' : 'pdf',
+    section: (m.type === 'topic' || m.section === 'topic') ? 'topic' : 'chapter',
+    url: m.file_url || m.url || '',
+    size: m.file_size || m.size || '',
+  };
+}
+
+async function getTpStreamsPlaybackUrl(videoId: string, accessToken: string) {
+  if (!videoId || !accessToken) return '';
+
+  try {
+    const response = await fetch(
+      `https://app.tpstreams.com/api/v1/${TPSTREAMS_ORG_ID}/assets/${encodeURIComponent(videoId)}/?access_token=${encodeURIComponent(accessToken)}`
+    );
+    if (!response.ok) return '';
+
+    const data = await response.json();
+    return (
+      data?.video?.playback_url ||
+      data?.video?.output_urls?.h264?.hls_url ||
+      data?.video?.hls_url ||
+      ''
+    );
+  } catch (error) {
+    console.warn('Failed to fetch TPStreams playback URL:', error);
+    return '';
+  }
+}
 
 async function request<T>(
   path: string,
@@ -9,7 +102,6 @@ async function request<T>(
   body?: any
 ): Promise<T> {
   const token = await getToken();
-  console.log('TOKEN:', token);
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -27,8 +119,6 @@ async function request<T>(
   }
 
   const response = await fetch(url, options);
-  console.log('STATUS:', response.status);
-  console.log('HEADERS:', response.headers);
 
   if (!response.ok) {
     let errorDetails = '';
@@ -47,29 +137,55 @@ async function request<T>(
   }
 
   const responseData = await response.json();
-  console.log('RESPONSE DATA:', responseData);
   return responseData as T;
 }
 
 export const api = {
   getHome: async () => {
     const res = await request<any>('/student/home');
-    return res?.data || res;
+    const root = unwrapData(res);
+    const myLearning = Array.isArray(root?.my_learning) ? root.my_learning : [];
+
+    return {
+      ...root,
+      continueWatching: root?.continue_watching
+        ? {
+            courseId: root.continue_watching.paper_id || '',
+            title: root.continue_watching.title || '',
+            subtitle: root.continue_watching.subject || '',
+            code: root.continue_watching.paper_code || '',
+            lastWatched: root.continue_watching.last_watched_label || '',
+            timeLeft: secondsToLabel(root.continue_watching.remaining_time_label),
+            progress: normalizeProgressRatio(root.continue_watching.progress_percent),
+            thumbnailUrl: root.continue_watching.thumbnail_url || '',
+            resumeVideoId: root.continue_watching.topic_id || '',
+            chapterId: root.continue_watching.chapter_id || '',
+          }
+        : null,
+      recentLearning: myLearning.map(mapCourse),
+      announcements: Array.isArray(root?.announcements) ? root.announcements.map(mapAnnouncement) : [],
+      availablePrograms: Array.isArray(root?.available_programs) ? root.available_programs : [],
+      selectedProgram: root?.selected_program || null,
+    };
   },
 
   getMyLearning: async () => {
     const res = await request<any>('/student/home/my-learning');
-    return res?.data || res || [];
+    const root = unwrapData(res);
+    const subjects = Array.isArray(root?.subjects) ? root.subjects : (Array.isArray(root) ? root : []);
+    return subjects.map(mapCourse);
   },
 
   getPapers: async () => {
     const res = await request<any>('/student/paper');
-    return res?.data || res || [];
+    const root = unwrapData(res);
+    const papers = Array.isArray(root?.subjects) ? root.subjects : (Array.isArray(root) ? root : []);
+    return papers.map(mapCourse);
   },
 
   getChapters: async () => {
     const res = await request<any>('/student/chapter');
-    return res?.data || res || [];
+    return unwrapData(res) || [];
   },
 
   switchCourse: async (programId: string) => {
@@ -79,24 +195,30 @@ export const api = {
   },
 
   getVideoByLecture: async (lectureId: string) => {
-    const res = await request<any>(`/student/course/video-by-lecture?lecture_id=${lectureId}`);
-    const innerData = res?.data?.data || res?.data || res;
+    const res = await request<any>(`/student/course/video-by-lecture?lecture_id=${encodeURIComponent(lectureId)}`);
+    const innerData = unwrapData(res);
+    const videoId = innerData?.video_id || innerData?.videoId || '';
+    const accessToken = innerData?.access_token || innerData?.accessToken || '';
+    const videoUrl = innerData?.videoUrl || innerData?.video_url || await getTpStreamsPlaybackUrl(videoId, accessToken);
+
     return {
-      videoId: innerData?.video_id || innerData?.videoId || '',
-      accessToken: innerData?.access_token || innerData?.accessToken || '',
-      videoUrl: innerData?.videoUrl || innerData?.video_url || '',
+      videoId,
+      accessToken,
+      videoUrl,
       title: innerData?.topic_name || innerData?.title || '',
+      thumbnailUrl: innerData?.thumbnail_url || innerData?.thumbnailUrl || '',
     };
   },
 
   getLectureByPaper: async (paperId: string) => {
-    const res = await request<any>(`/student/course/lecture-by-paper?paper_id=${paperId}`);
-    return res?.data || res || [];
+    const res = await request<any>(`/student/course/lecture-by-paper?paper_id=${encodeURIComponent(paperId)}`);
+    const root = unwrapData(res);
+    return Array.isArray(root) ? root : [];
   },
 
   getPaperDetails: async (paperId: string) => {
-    const res = await request<any>(`/student/course/paper-details?paper_id=${paperId}`);
-    const innerData = res?.data?.data || res?.data || res;
+    const res = await request<any>(`/student/course/paper-details?paper_id=${encodeURIComponent(paperId)}`);
+    const innerData = unwrapData(res);
     
     const info = innerData?.paper_info;
     const stats = innerData?.statistics;
@@ -120,21 +242,15 @@ export const api = {
   },
 
   getMaterialByLecture: async (lectureId: string) => {
-    const res = await request<any>(`/student/course/material-by-lecture?lecture_id=${lectureId}`);
-    const rawList = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+    const res = await request<any>(`/student/course/material-by-lecture?lecture_id=${encodeURIComponent(lectureId)}`);
+    const root = unwrapData(res);
+    const rawList = Array.isArray(root) ? root : [];
     
     const topic: Material[] = [];
     const chapter: Material[] = [];
     
     rawList.forEach((m: any) => {
-      const mapped: Material = {
-        id: m.material_id || m.id || String(Math.random()),
-        title: m.title || '',
-        type: 'pdf',
-        section: (m.type === 'topic' || m.section === 'topic') ? 'topic' : 'chapter',
-        url: m.file_url || m.url || '',
-        size: m.file_size || m.size || '',
-      };
+      const mapped = mapMaterial(m);
       
       if (mapped.section === 'topic') {
         topic.push(mapped);
@@ -147,8 +263,8 @@ export const api = {
   },
 
   getNotes: async (videoId: string) => {
-    const res = await request<any>(`/student/note?video_id=${videoId}`);
-    const innerData = res?.data?.data || res?.data || res;
+    const res = await request<any>(`/student/note?video_id=${encodeURIComponent(videoId)}`);
+    const innerData = unwrapData(res);
     return Array.isArray(innerData) ? innerData : [];
   },
 
